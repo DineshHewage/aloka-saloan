@@ -1,7 +1,7 @@
 export function GET() {
-  console.log("Dinesh.................Get request received");
+  console.log("Liyanna.................Get request received");
 }
 
 export function POST() {
-  console.log("Dinesh.................POST request received");
+  console.log("Nirosha.................POST request received");
 }
