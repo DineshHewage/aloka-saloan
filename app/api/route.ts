@@ -2,32 +2,49 @@ import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
-  const students = await prisma.student.findMany();
-
-  return NextResponse.json({
-    students: students,
-  });
+  try {
+    const students = await prisma.student.findMany();
+    return NextResponse.json({ students });
+  } catch (error) {
+    console.error("Error fetching students:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch students" },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json(); //read the data that the client sent.
-  /**Waits until all the data has arrived.
-   * Turns the text into a JavaScript object.
-   * Saves it in the variable body. */
+  try {
+    // read the data that the client sent
+    const body = await req.json();
 
-  //save the data in the database.
-  await prisma.student.create({
-    data: {
-      name: body.name,
-      age: body.age,
-      email: body.email,
-      city: body.city,
-    },
-  });
-  /**Sends the student data to PostgreSQL.
-   * Waits until the database says “saved”. */
+    // validation
+    if (!body.name || !body.age || !body.email || !body.city) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 },
+      );
+    }
 
-  return NextResponse.json({
-    message: "Student creation is successfull",
-  });
+    // save the data in the database
+    await prisma.student.create({
+      data: {
+        name: body.name,
+        age: body.age,
+        email: body.email,
+        city: body.city,
+      },
+    });
+
+    return NextResponse.json({
+      message: "Student creation is successful",
+    });
+  } catch (error) {
+    console.error("Error creating student:", error);
+    return NextResponse.json(
+      { error: "Failed to create student" },
+      { status: 500 },
+    );
+  }
 }
