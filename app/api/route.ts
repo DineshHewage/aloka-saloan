@@ -10,8 +10,12 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const body = await req.json(); //read the data that the client sent.
+  /**Waits until all the data has arrived.
+   * Turns the text into a JavaScript object.
+   * Saves it in the variable body. */
 
+  //save the data in the database.
   await prisma.student.create({
     data: {
       name: body.name,
@@ -20,6 +24,8 @@ export async function POST(req: NextRequest) {
       city: body.city,
     },
   });
+  /**Sends the student data to PostgreSQL.
+   * Waits until the database says “saved”. */
 
   return NextResponse.json({
     message: "Student creation is successfull",
