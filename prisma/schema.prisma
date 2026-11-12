@@ -12,3 +12,44 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN
+  STAFF
+  CUSTOMER
+}
+
+enum Permission {
+  CREATE_USER
+  READ_USER
+  UPDATE_USER
+  DELETE_USER
+  CREATE_SERVICE
+  READ_SERVICE
+  UPDATE_SERVICE
+  DELETE_SERVICE
+  CREATE_APPOINTMENT
+  READ_APPOINTMENT
+  UPDATE_APPOINTMENT
+  DELETE_APPOINTMENT
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE // considered as deleted 
+  SUSPENDED // connsidered as deleted but can be reactivated
+}
+
+model User {
+  id String @id @default(uuid())
+  email     String   @unique
+  firstname String
+  lastname  String
+  password  String
+  role      Role @default(CUSTOMER)// admin, staff, customer
+  image String @default("/images/default-user.png")
+  permisions Permission[]
+  status Status @default(ACTIVE)
+  createdAt DateTime @default(now())
+  lastLogin DateTime? 
+  //updatedAt DateTime @updatedAt
+}
