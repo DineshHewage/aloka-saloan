@@ -1,20 +1,27 @@
+import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-export function GET() {
-  console.log("Liyanna.................Get request received");
+export async function GET(req: NextRequest) {
+  const students = await prisma.student.findMany();
+
   return NextResponse.json({
-    message: "GET request received successfully",
+    students: students,
   });
 }
 
 export async function POST(req: NextRequest) {
-  console.log("Nirosha.................POST request received");
-
   const body = await req.json();
 
-  console.log(body);
+  await prisma.student.create({
+    data: {
+      name: body.name,
+      age: body.age,
+      email: body.email,
+      city: body.city,
+    },
+  });
 
   return NextResponse.json({
-    message: "POST request received successfully",
+    message: "Student creation is successfull",
   });
 }
