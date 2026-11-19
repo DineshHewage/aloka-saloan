@@ -42,8 +42,8 @@ enum Status {
 model User {
   id String @id @default(uuid())
   email     String   @unique
-  firstname String
-  lastname  String
+  firstName String
+  lastName  String
   password  String
   role      Role @default(CUSTOMER)// admin, staff, customer
   image String @default("/images/default-user.png")
