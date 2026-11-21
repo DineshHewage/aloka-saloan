@@ -13,5 +13,5 @@ const createUserSchema = z.object({
     .min(6, { message: "Password must be at least 6 characters long" }),
 });
 
-export type CreateUserInput = z.infer<typeof createUserSchema>;
+// export type CreateUserInput = z.infer<typeof createUserSchema>;
 export default createUserSchema;
