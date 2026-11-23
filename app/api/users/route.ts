@@ -3,21 +3,18 @@ import createUserSchema from "@/dto/userRegistrationRequest";
 import prisma from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
-  // 1. Read the body (bad JSON = client mistake)
+  // 1. Validate bad JSON requests -> client mistake
   let body;
   try {
     // Read the request body and convert the JSON text into a JavaScript object
     body = await req.json();
   } catch (error) {
-    return NextResponse.json(
-      { error: "Invalid request body" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid requests" }, { status: 400 });
   }
 
   // 2. validate, save and handle database errors.
   try {
-    //check the data and save the outcome in result.
+    //check the data(user information against the dto) and save the outcome in result.
     const result = createUserSchema.safeParse(body);
     //If everything is valid -- result = { success: true, data: { email: "...", firstName: "...", ... } }
     //If there is a validation error -- result = { success: false, error: ZodError }
