@@ -63,6 +63,16 @@ export async function POST(req: NextRequest) {
         message: "Invalid email or password",
       });
     }
+
+    // check the account status
+    if (user.status !== "ACTIVE") {
+      return NextResponse.json(
+        {
+          message: "Your account is not activated. Please contact support team",
+        },
+        { status: 403 },
+      );
+    }
   } catch (error) {
     // Any unexpected error
     console.error("Error logging in:", error);
