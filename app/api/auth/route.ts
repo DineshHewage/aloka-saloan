@@ -3,6 +3,7 @@ import { z } from "zod";
 import authUserSchema from "@/dto/userAuthenticationRequest";
 import { Result } from "pg";
 import prisma from "@/lib/prisma";
+import { compare } from "bcryptjs";
 
 export async function POST(req: NextRequest) {
   // 1. Read the body
@@ -52,6 +53,15 @@ export async function POST(req: NextRequest) {
         },
         { status: 401 },
       );
+    }
+
+    // Compair the typed-password with the stord hash.
+    const isPasswordValid = await compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return NextResponse.json({
+        message: "Invalid email or password",
+      });
     }
   } catch (error) {
     // Any unexpected error
