@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { hash } from "bcryptjs";
 import createUserSchema from "@/dto/userRegistrationRequest";
 import prisma from "@/lib/prisma";
 
@@ -40,7 +41,25 @@ export async function POST(req: NextRequest) {
                   └─ email is new → saved → 201
      */
 
-    await prisma.user.create({ data: result.data });
+    // result.data holds the validated user details, so we pull each value out into its own variable.
+    const { email, firstName, lastName, password } = result.data;
+
+    // hash() converts the plain password (for example "123456789") into a scrambled string
+    // (for example "$2b$12$KSvzR0u4dMffoc...") that cannot be turned back into the original.
+    // 12 is the cost factor: a higher number is slower to compute, so it is harder for attackers to guess.
+    // hash() is async, so we use await.
+    const passwordHash = await hash(password, 12);
+
+    // Save the user in PostgreSQL.
+    // We store passwordHash instead of password, so the real password is never saved in the database.
+    await prisma.user.create({
+      data: {
+        email,
+        firstName,
+        lastName,
+        password: passwordHash,
+      },
+    });
 
     return NextResponse.json(
       { message: "User created successfully" },
