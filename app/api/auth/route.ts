@@ -4,6 +4,9 @@ import authUserSchema from "@/dto/userAuthenticationRequest";
 import { Result } from "pg";
 import prisma from "@/lib/prisma";
 import { compare } from "bcryptjs";
+import { console } from "inspector";
+import { Role } from "@/app/generated/prisma/enums";
+import { SignJWT } from "jose";
 
 export async function POST(req: NextRequest) {
   // 1. Read the body
@@ -44,9 +47,9 @@ export async function POST(req: NextRequest) {
     const { email, password } = zodValidatedResult.data;
 
     // Find the user by email.
-    const user = await prisma.user.findUnique({ where: { email } });
+    const selectedUser = await prisma.user.findUnique({ where: { email } });
 
-    if (!user) {
+    if (!selectedUser) {
       return NextResponse.json(
         {
           message: "Invalid email or password",
@@ -56,7 +59,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Compair the typed-password with the stord hash.
-    const isPasswordValid = await compare(password, user.password);
+    const isPasswordValid = await compare(password, selectedUser.password);
 
     if (!isPasswordValid) {
       return NextResponse.json({
@@ -65,7 +68,7 @@ export async function POST(req: NextRequest) {
     }
 
     // check the account status
-    if (user.status !== "ACTIVE") {
+    if (selectedUser.status !== "ACTIVE") {
       return NextResponse.json(
         {
           message: "Your account is not activated. Please contact support team",
@@ -73,6 +76,49 @@ export async function POST(req: NextRequest) {
         { status: 403 },
       );
     }
+
+    // Create a new user object from the selected user(who tries to log in and has correct PW and email)
+    // Here never use the password of the selected user.
+    const tokenUserInfromation = {
+      id: selectedUser.id,
+      email: selectedUser.email,
+      firstName: selectedUser.firstName,
+      lastName: selectedUser.lastName,
+      role: selectedUser.role,
+      image: selectedUser.image,
+      permisions: selectedUser.permisions,
+    };
+
+    // Read the secret key from the .env file (only our server knows it)
+    const signature = process.env.JOSE_JWT_SECRET;
+
+    // jose needs the secret as bytes, not plain text, so we convert it
+    const signatureEncoded = new TextEncoder().encode(signature);
+
+    // Create the token (JWT)
+    const token = await new SignJWT(tokenUserInfromation) // the user information goes inside the token
+      .setProtectedHeader({ alg: "HS256" }) // the signing method (algorithm) we use
+      .setExpirationTime("48h") // the token stops working after 48 hours
+      .sign(signatureEncoded); // add the secret signature to finish the token
+
+    // Build the response that goes back to Postman or the browser
+    const response = NextResponse.json(
+      { message: "You logged in successfully", token: token },
+      { status: 200 },
+    );
+
+    // Save the token in a cookie, so the browser stores it
+    response.cookies.set({
+      name: "auth-token", // the name of the cookie
+      value: token, // what is stored inside the cookie: our token
+      httpOnly: true, // what is stored inside the cookie: our token
+      secure: false, // false = works on http://localhost. Use true on a real https website
+      sameSite: "lax", // other websites can't send this cookie in most cross-site requests
+      maxAge: 60 * 60 * 24 * 2, // cookie lives for 2 days (60 sec x 60 min x 24 h x 2), in seconds
+    });
+
+    // Send the response (with the cookie attached) back to the client
+    return response;
   } catch (error) {
     // Any unexpected error
     console.error("Error logging in:", error);
